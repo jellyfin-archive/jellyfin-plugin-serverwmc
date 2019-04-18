@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +10,7 @@ using MediaBrowser.Model.LiveTv;
 using System.Threading;
 using System.Reflection;
 using System.Diagnostics;
-using MediaBrowser.Model.Logging;
+using Microsoft.Extensions.Logging;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Drawing;
@@ -40,7 +40,7 @@ namespace Jellyfin.Plugin.ServerWMC
         int _idStreamInt = 0;               // use to generate stream Id
         string _serverWMC_version = "unknown";
         private int _serverWMC_build = 0;
-        private ILogger _logger;
+        private readonly ILogger _logger;
 
         private readonly string HTTP = @"http://";
 
@@ -62,30 +62,30 @@ namespace Jellyfin.Plugin.ServerWMC
         /// <summary>
         /// constructor
         /// </summary>
-        public WMCService(IHttpClient httpClient, IFileSystem fileSystem, ILogManager logManager)
+        public WMCService(IHttpClient httpClient, IFileSystem fileSystem, ILoggerFactory loggerFactory)
         {
             Instance = this;
-            _logger = logManager.GetLogger(this.Name);      // start logger
+            _logger = loggerFactory.CreateLogger(GetType().Name);    // start logger
             _clientVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
             SocketClientAsync.InitAddress(Plugin.Instance.Configuration.ServerIP, Plugin.Instance.Configuration.ServerPort);    // set ip and port
-            _logger.Info("Config IP: {0} ({1}), Config Port: {2}",
+            _logger.LogInformation("Config IP: {0} ({1}), Config Port: {2}",
                                             Plugin.Instance.Configuration.ServerIP,
                                             SocketClientAsync.IpAddr,
                                             Plugin.Instance.Configuration.ServerPort);
 
             //Thread.Sleep(20000);
 
-            _linuxPath = null;  // linux path obsoleted in .net core 
+            _linuxPath = null;  // linux path obsoleted in .net core
 
             // read newest serverwmc build from autoupdate site
             var newBuild = GetNewestSWMCBuild();
             if (newBuild == 0)
-                _logger.Info("Using last hardcoded build value: " + _newestBuild);
+                _logger.LogInformation("Using last hardcoded build value: " + _newestBuild);
             else
             {
                 _newestBuild = newBuild;
-                _logger.Info("Newest ServerWMC build value found: " + _newestBuild);
+                _logger.LogInformation("Newest ServerWMC build value found: " + _newestBuild);
             }
 
             _fileSystem = fileSystem;   // for file access, not used currently
@@ -100,7 +100,7 @@ namespace Jellyfin.Plugin.ServerWMC
                             string request = string.Format("GetServiceStatus|{0}|{1}", _clientVersion, _clientOS);
                             responses = SocketClientAsync.GetVector(request);
                         }
-                        catch 
+                        catch
                         {
                             responses = null;
                         }
@@ -132,12 +132,12 @@ namespace Jellyfin.Plugin.ServerWMC
         /// </summary>
         bool IsServerVersionOK
         {
-            get 
-            { 
+            get
+            {
                 if (_serverWMC_build <= 0)
                     return false;
                 else
-                    return _serverWMC_build >= _requiredBuild; 
+                    return _serverWMC_build >= _requiredBuild;
             }
         }
 
@@ -162,7 +162,7 @@ namespace Jellyfin.Plugin.ServerWMC
         /// </summary>
         bool IsServerUpTodate
         {
-            get 
+            get
             {
                 var build = GetNewestSWMCBuild();
                 if (build > 0)
@@ -205,7 +205,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.Error("Failed check for checking for newest ServerWMC version number: " + ex);
+                _logger.LogError("Failed check for checking for newest ServerWMC version number: " + ex);
                 return 0;
             }
         }
@@ -216,7 +216,7 @@ namespace Jellyfin.Plugin.ServerWMC
         /// </summary>
         public string Name
         {
-            get 
+            get
             {
                 return "ServerWMC";
             }
@@ -239,7 +239,7 @@ namespace Jellyfin.Plugin.ServerWMC
             responses = await SocketClientAsync.GetVectorAsync(request, cancellationToken);
 
             // if server is up, keep reading version until the required version of swmc is found
-            if (responses != null && !IsServerVersionOK)     
+            if (responses != null && !IsServerVersionOK)
             {
                 responses = await SocketClientAsync.GetVectorAsync("GetServerVersion", cancellationToken);
                 _serverWMC_version = responses[0];
@@ -321,7 +321,7 @@ namespace Jellyfin.Plugin.ServerWMC
             if (useLinuxPath && inPath != null && !string.IsNullOrEmpty(_recTVPath) && inPath.StartsWith(_recTVPath))
             {
                 // get relative path to data by removing win/UNC recTV path, also replace win slash with linux slash
-                string relativePath = inPath.Remove(0, _recTVPath.Length).Replace('\\', '/');   
+                string relativePath = inPath.Remove(0, _recTVPath.Length).Replace('\\', '/');
                 // concat the config linux path to rec tv with the relative path
                 string newPath = string.Format("{0}/{1}", _linuxPath.TrimEnd('/'), relativePath.TrimStart('/'));
                 return newPath;
@@ -517,12 +517,12 @@ namespace Jellyfin.Plugin.ServerWMC
                             }
                         }
                         else
-                            _logger.Error("GetMediaStream> Prop name: " + propName + " not found");
+                            _logger.LogError("GetMediaStream> Prop name: " + propName + " not found");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error("GetMediaStream> Media stream parse error: {0}", ex);
+                    _logger.LogError("GetMediaStream> Media stream parse error: {0}", ex);
                 }
             }
             return ms;
@@ -546,7 +546,7 @@ namespace Jellyfin.Plugin.ServerWMC
             {
                 transcodeProfileId = ForcedProfile;
             }
-            
+
             if (!string.IsNullOrEmpty(transcodeProfileId))              // use transcode profile name (if any)
                 profileCmd = "TranscodeProfile:" + transcodeProfileId;
 
@@ -566,7 +566,7 @@ namespace Jellyfin.Plugin.ServerWMC
 
                 if (isUrl)                  // if stream file path is a url (user has set swmc to use urls with wcf service)
                 {
-                    // if swmc version is greater >= 1234 do nothing when stream is a url, because for this case the stream 
+                    // if swmc version is greater >= 1234 do nothing when stream is a url, because for this case the stream
                     // will be validated when the VideoFileStream is first read, if it never gets read from the stream will be purged
                     // also send StreamFileSize if stream is a dlna path (just for safty sake)
                     if (_serverWMC_build < 1234 || !strm.Contains("serverwmc"))
@@ -582,7 +582,7 @@ namespace Jellyfin.Plugin.ServerWMC
                 }
                 else    // tell server file was not accesible and throw an error
                 {
-                    _logger.Error("GetChannelStream> stream file not found: {0}", strm);
+                    _logger.LogError("GetChannelStream> stream file not found: {0}", strm);
                     // tell server stream did not start
                     await SocketClientAsync.GetVectorAsync(XferString("StreamStartError", strm), cancellationToken, streamId);
                     throw new Exception("ServerWMC: Stream file not not found: " + strm);
@@ -643,9 +643,9 @@ namespace Jellyfin.Plugin.ServerWMC
                     mediaInfo.Protocol = MediaBrowser.Model.MediaInfo.MediaProtocol.Http;
                     mediaInfo.ReadAtNativeFramerate = false;            // false for urls
                     if (!isDlna)                                        // don't set container type for dlna addresses
-                        mediaInfo.Container = "ts"; 
+                        mediaInfo.Container = "ts";
                 }
-                else 
+                else
                 {
                     mediaInfo.Protocol = MediaBrowser.Model.MediaInfo.MediaProtocol.File;
                     mediaInfo.ReadAtNativeFramerate = true;             // true for files
@@ -715,7 +715,7 @@ namespace Jellyfin.Plugin.ServerWMC
                         mCh.ImageUrl = v[5];
                     else
                         mCh.ImagePath = TVPath(v[5]);
-                    mCh.HasImage = false; //v[5] != null;        
+                    mCh.HasImage = false; //v[5] != null;
                     //xChannel.bIsHidden = Str2Bool(v[6]);
                     mCh.Number = v[7];
                     mCh.Name = v[8];
@@ -724,7 +724,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.Error("GetChannelsAsync> " + ex);
+                _logger.LogError("GetChannelsAsync> " + ex);
                 throw ex;
             }
 
@@ -751,7 +751,7 @@ namespace Jellyfin.Plugin.ServerWMC
         //    }
         //    return null;
         }
-       
+
         #endregion
 
         #region timers
@@ -777,7 +777,7 @@ namespace Jellyfin.Plugin.ServerWMC
 
                 return new SeriesTimerInfo
                 {
-                    PrePaddingSeconds = GetPaddingSeconds(responses[0]),  
+                    PrePaddingSeconds = GetPaddingSeconds(responses[0]),
                     PostPaddingSeconds = GetPaddingSeconds(responses[1]),
                     IsPrePaddingRequired = bool.Parse(responses[2]),
                     IsPostPaddingRequired = bool.Parse(responses[3]),
@@ -797,7 +797,7 @@ namespace Jellyfin.Plugin.ServerWMC
 
             if (DateTimeOffset.UtcNow >= info.EndDate)
             {
-                _logger.Error("CreateTimerAsync> requested program '{0}' has already aired;  EndTime(UTC): {1},  CurrentTime(UTC): {2}", info.Name, info.EndDate, DateTimeOffset.UtcNow);
+                _logger.LogError("CreateTimerAsync> requested program '{0}' has already aired;  EndTime(UTC): {1},  CurrentTime(UTC): {2}", info.Name, info.EndDate, DateTimeOffset.UtcNow);
                 throw new Exception("ServerWMC: Can't record: program occurs in the past");
             }
 
@@ -808,7 +808,7 @@ namespace Jellyfin.Plugin.ServerWMC
                                                 Utilities.ToTime_t(info.StartDate),
                                                 Utilities.ToTime_t(info.EndDate),
                                                 (int)PVR_TIMER_STATE.PVR_TIMER_STATE_NEW,
-                                                info.Name,                                  
+                                                info.Name,
                                                 0,                                          // xbmc's priority - not used
                                                 XferPadding(info.PrePaddingSeconds),
                                                 XferPadding(info.PostPaddingSeconds),
@@ -822,7 +822,7 @@ namespace Jellyfin.Plugin.ServerWMC
             {
                 LastRecordingChange = DateTimeOffset.UtcNow;
 
-                _logger.Info("CreateTimerAsync> recording added for timer '{0}', status {1}", info.Name, info.Status);
+                _logger.LogInformation("CreateTimerAsync> recording added for timer '{0}', status {1}", info.Name, info.Status);
 
 		        if (responses.Length > 1)								        // if there is extra results sent from server...
 		        {
@@ -836,15 +836,15 @@ namespace Jellyfin.Plugin.ServerWMC
 				        }
 				        else if (splitResult[0] == "recordingChannel")			// service picked a different channel for timer
 				        {
-                            _logger.Info("CreateTimerAsync> timer channel changed by wmc to '{0}'", splitResult[1]);
+                            _logger.LogInformation("CreateTimerAsync> timer channel changed by wmc to '{0}'", splitResult[1]);
 				        }
 				        else if (splitResult[0] == "recordingTime")				// service picked a different start time for timer
 				        {
-                            _logger.Info("CreateTimerAsync> timer start time changed by wmc to '{0}'", splitResult[1]);
+                            _logger.LogInformation("CreateTimerAsync> timer start time changed by wmc to '{0}'", splitResult[1]);
 				        }
 				        else if (splitResult[0] == "increasedEndTime")			// end time has been increased on an instant record
                         {
-                            _logger.Info("CreateTimerAsync> instant record end time increased by '{0}' minutes", splitResult[1]);
+                            _logger.LogInformation("CreateTimerAsync> instant record end time increased by '{0}' minutes", splitResult[1]);
 				        }
 			        }
 		        }
@@ -864,7 +864,7 @@ namespace Jellyfin.Plugin.ServerWMC
 
             string[] responses = await SocketClientAsync.GetVectorAsync(
                                 XferString(     "CreateSeriesTimer",
-                                                info.Id,                            
+                                                info.Id,
                                                 info.Name,
                                                 info.ChannelId,
                                                 entryId,                         // ScheduleEntry Id
@@ -876,9 +876,9 @@ namespace Jellyfin.Plugin.ServerWMC
                                                 info.IsPostPaddingRequired,
                                                 info.RecordAnyChannel,
                                                 info.RecordNewOnly,
-                                                info.RecordAnyTime,          
+                                                info.RecordAnyTime,
                                                 iDays
-                                            ), cancellationToken); 
+                                            ), cancellationToken);
 
             if (!IsServerError(responses))
             {
@@ -910,8 +910,8 @@ namespace Jellyfin.Plugin.ServerWMC
                     //mTmr.strDirectory v[6]
                     mTmr.Overview = v[7];
                     //xTmr.iPriority = atoi(v[8].c_str());				// rec priority
-                    //xTmr.bIsRepeating = Str2Bool(v[9].c_str());			// repeating rec 
-                    //xTmr.iEpgUid = atoi(v[10].c_str());					// epg ID 
+                    //xTmr.bIsRepeating = Str2Bool(v[9].c_str());			// repeating rec
+                    //xTmr.iEpgUid = atoi(v[10].c_str());					// epg ID
                     mTmr.PrePaddingSeconds = GetPaddingSeconds(v[11]);     // requested padding
                     mTmr.PostPaddingSeconds = GetPaddingSeconds(v[12]);
 
@@ -921,7 +921,7 @@ namespace Jellyfin.Plugin.ServerWMC
                     // mb3 only fields
                     mTmr.ProgramId = ProgramId(v[15], mTmr.ChannelId);
                     mTmr.SeriesTimerId = v[16];                             // the id of the series timer this timer is part of (empty string if not part of series)
-                    mTmr.IsPrePaddingRequired = bool.Parse(v[17]);      // 'required' padding 
+                    mTmr.IsPrePaddingRequired = bool.Parse(v[17]);      // 'required' padding
                     mTmr.IsPostPaddingRequired = bool.Parse(v[18]);
 
 
@@ -961,7 +961,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.Error("GetTimersAsync> " + ex);
+                _logger.LogError("GetTimersAsync> " + ex);
                 throw ex;
             }
 
@@ -1015,7 +1015,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.Error("GetSeriesTimersAsync> " + ex);
+                _logger.LogError("GetSeriesTimersAsync> " + ex);
                 throw ex;
             }
 
@@ -1092,7 +1092,7 @@ namespace Jellyfin.Plugin.ServerWMC
                                                 info.IsPostPaddingRequired,
                                                 info.RecordAnyChannel,
                                                 info.RecordNewOnly,
-                                                info.RecordAnyTime,          
+                                                info.RecordAnyTime,
                                                 iDays,
                                                 info.Priority
                                             ), cancellationToken);
@@ -1136,7 +1136,7 @@ namespace Jellyfin.Plugin.ServerWMC
                 if (!isUrl)
                     strmFile = TVPath(strmFile);                // correct for possible unix mount paths
 
-                if (isUrl || File.Exists(strmFile)) 
+                if (isUrl || File.Exists(strmFile))
                 {
                     // give serverWMC and response so that it knows the stream  was found
                     // if there is a problem accessing it, the jellyfin server core will take care of it
@@ -1144,9 +1144,9 @@ namespace Jellyfin.Plugin.ServerWMC
                 }
                 else    // tell server file was not accesible and throw an error
                 {
-                    _logger.Error("GetRecordingStream> stream file not found: {0}", strmFile);
+                    _logger.LogError("GetRecordingStream> stream file not found: {0}", strmFile);
                     // tell server stream did not start
-                    await SocketClientAsync.GetVectorAsync(XferString("StreamStartError", strmFile), cancellationToken, streamId);   
+                    await SocketClientAsync.GetVectorAsync(XferString("StreamStartError", strmFile), cancellationToken, streamId);
                     throw new Exception("ServerWMC: Stream file not not found: " + strmFile);
                 }
 
@@ -1185,7 +1185,7 @@ namespace Jellyfin.Plugin.ServerWMC
                 if (isUrl)
                 {
                     mediaInfo.Protocol = MediaBrowser.Model.MediaInfo.MediaProtocol.Http;
-                    mediaInfo.ReadAtNativeFramerate = false;  
+                    mediaInfo.ReadAtNativeFramerate = false;
                     mediaInfo.Container = "ts";     // urls are always ts (should be okay even if using dlna too)
                     mediaInfo.IgnoreDts = true;
                 }
@@ -1202,7 +1202,7 @@ namespace Jellyfin.Plugin.ServerWMC
 
             return null;
         }
-    
+
 
         public async Task DeleteRecordingAsync(string recordingId, System.Threading.CancellationToken cancellationToken)
         {
@@ -1315,7 +1315,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.Error("GetRecordingsAsync> " + ex.Message);
+                _logger.LogError("GetRecordingsAsync> " + ex.Message);
                 throw ex;
             }
 
@@ -1356,7 +1356,7 @@ namespace Jellyfin.Plugin.ServerWMC
                     var v = response.Split('|');				// split to unpack string
 
                     // ProgramId = "entryId-channelId" to ensure uniqueness
-                    mProg.Id = ProgramId(v[0], v[16]); 
+                    mProg.Id = ProgramId(v[0], v[16]);
                     mProg.Name = v[1];
                     //mProg.ChannelName = v[2];
                     mProg.StartDate = Utilities.ToDateTime(v[3]).UtcDateTime;
@@ -1381,7 +1381,7 @@ namespace Jellyfin.Plugin.ServerWMC
                             mProg.ImagePath = TVPath(v[14]);
                     }
 
-                    mProg.HasImage = false;// v[14] != "";  
+                    mProg.HasImage = false;// v[14] != "";
                     mProg.EpisodeTitle = v[15];
 
                     // mb3 only
@@ -1398,7 +1398,7 @@ namespace Jellyfin.Plugin.ServerWMC
                     mProg.IsKids = IsProgramType(pType, ProgramType.IsKids);
                     mProg.IsLive = IsProgramType(pType, ProgramType.IsLive);
                     mProg.IsNews = IsProgramType(pType, ProgramType.IsNews);
-                    mProg.IsPremiere = IsProgramType(pType, ProgramType.IsPremiere);  
+                    mProg.IsPremiere = IsProgramType(pType, ProgramType.IsPremiere);
 
                     if (v.Count() > 20)  // really old versions of serverwmc won't return fields above 19
                     {
@@ -1410,7 +1410,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.Error("GetProgramsAsync> " + ex.Message);
+                _logger.LogError("GetProgramsAsync> " + ex.Message);
                 throw ex;
             }
 
@@ -1503,7 +1503,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.Error("GetStatusInfoAsync::TunerStatus> " + ex.Message);
+                _logger.LogError("GetStatusInfoAsync::TunerStatus> " + ex.Message);
                 throw ex;
             }
             #endregion
@@ -1535,7 +1535,7 @@ namespace Jellyfin.Plugin.ServerWMC
             return new LiveTvServiceStatusInfo
             {
                 StatusMessage = status,                     // status error is only shown in jellyfin server if 'Unavailable' is set below
-                Version = _serverWMC_version,   
+                Version = _serverWMC_version,
                 HasUpdateAvailable = !IsServerUpTodate,     // true if an update is available
                 Status = (serverDown || !IsServerVersionOK || !isRecFolderFound) ? LiveTvServiceStatus.Unavailable : LiveTvServiceStatus.Ok,
                 Tuners = tunerInfoList
@@ -1677,7 +1677,7 @@ namespace Jellyfin.Plugin.ServerWMC
                                 Width = width,
                                 Height = height,
                                 BitRate = videoBitrate
-                                
+
                             },
                             new MediaStream
                             {
@@ -1715,7 +1715,7 @@ namespace Jellyfin.Plugin.ServerWMC
         IsNews = 128,
         IsPremiere = 256,
         IsFinale = 512,
-        Is3D = 1024,                    
+        Is3D = 1024,
         IsEducational = 2048,
         IsSubjectToBlackout = 4096
     }
