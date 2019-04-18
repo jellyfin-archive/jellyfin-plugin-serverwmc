@@ -1,30 +1,27 @@
 ﻿using System;
+using System.Collections.Generic;       // for new way to doing webpages
+using Jellyfin.Plugin.ServerWMC.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
-using MediaBrowser.Model.Serialization;
-using wmc2mb.Configuration;
 using MediaBrowser.Model.Plugins;
-using System.Collections.Generic;       // for new way to doing webpages
-using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Serialization;
+using Microsoft.Extensions.Logging;
 using System.IO;
 using MediaBrowser.Model.Drawing;
 
-namespace wmc2mb
+namespace Jellyfin.Plugin.ServerWMC
 {
-    public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IHasThumbImage
+    public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
+        public override string Name => "ServerWMC";
+        public override Guid Id => Guid.Parse("1fc322a1-af2e-49a5-b2eb-a89b4240f700");
+
         public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer) : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
         }
 
-        /// <summary>
-        /// gets the name of the blugin
-        /// </summary>
-        public override string Name
-        {
-            get { return "ServerWMC"; }
-        }
+        public static Plugin Instance { get; private set; }
 
         /// <summary>
         /// Gets the plugin description.
@@ -38,32 +35,6 @@ namespace wmc2mb
             }
         }
 
-        private Guid _id = new Guid("817527c1-5f78-4763-acb1-59fa0d64854a");
-        public override Guid Id
-        {
-            get { return _id; }
-        }
-
-        public Stream GetThumbImage()
-        {
-            var type = GetType();
-            return type.Assembly.GetManifestResourceStream(type.Namespace + ".thumb.jpg");
-        }
-
-        public ImageFormat ThumbImageFormat
-        {
-            get
-            {
-                return ImageFormat.Jpg;
-            }
-        }
-
-        /// <summary>
-        /// Gets the instance.
-        /// </summary>
-        /// <value>The instance.</value>
-        public static Plugin Instance { get; private set; }
-
         public override void UpdateConfiguration(MediaBrowser.Model.Plugins.BasePluginConfiguration configuration)
         {
             PluginConfiguration pc = configuration as PluginConfiguration;
@@ -73,12 +44,12 @@ namespace wmc2mb
             bool changedPort = (pc.ServerPort != Configuration.ServerPort);         // true if ip was changed
 
             if (changedIp || changedPort)
-                WMCService.AddonGoingDown();                                        // tell current serverwmc at old IP, this mbs is going down
+                WMCService.AddonGoingDown();                                        // tell current serverwmc at old IP, this jellyfin server is going down
 
             base.UpdateConfiguration(configuration);                                // update to new config data
 
             // if Ip chaged, tell core to change datasource
-            if (changedIp || changedPort)                                           //  tell mbs to load new data source
+            if (changedIp || changedPort)                                           //  tell jellyfin server to load new data source
             {
                 WMCService.DataSourceChange();
             }
@@ -90,8 +61,8 @@ namespace wmc2mb
             {
                 new PluginPageInfo
                 {
-                    Name = "ServerWMC",
-                    EmbeddedResourcePath = GetType().Namespace + ".Configuration.configPage.html"
+                    Name = this.Name,
+                    EmbeddedResourcePath = string.Format("{0}.Configuration.configPage.html", GetType().Namespace)
                 }
             };
         }

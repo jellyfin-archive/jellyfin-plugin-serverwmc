@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-namespace wmc2mb
+namespace Jellyfin.Plugin.ServerWMC
 {
     class SocketClient
     {

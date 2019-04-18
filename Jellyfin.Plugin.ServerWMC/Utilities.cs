@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace wmc2mb
+namespace Jellyfin.Plugin.ServerWMC
 {
     static class Utilities
     {

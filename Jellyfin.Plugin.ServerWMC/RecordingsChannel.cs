@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -16,7 +16,7 @@ using System.Globalization;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.LiveTv;
 
-namespace wmc2mb
+namespace Jellyfin.Plugin.ServerWMC
 {
     public class RecordingsChannel : IChannel, IHasCacheKey, ISupportsDelete, ISupportsLatestMedia, ISupportsMediaProbe, IHasFolderAttributes, IRequiresMediaInfoCallback
     {

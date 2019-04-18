@@ -1,6 +1,6 @@
 using MediaBrowser.Model.Plugins;
 
-namespace wmc2mb.Configuration
+namespace Jellyfin.Plugin.ServerWMC.Configuration
 {
     /// <summary>
     /// Class PluginConfiguration
@@ -26,8 +26,7 @@ namespace wmc2mb.Configuration
         /// <summary>
         /// Initializes a new instance of the <see cref="PluginConfiguration" /> class.
         /// </summary>
-        public PluginConfiguration()
-            : base()
+        public PluginConfiguration() : base()
         {
             ServerIP = "localhost";
             ServerPort = 9080;

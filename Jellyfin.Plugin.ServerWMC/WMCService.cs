@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,7 +23,7 @@ using MediaBrowser.Model.IO;
 // to update package enter:
 //      Install-Package MediaBrowser.Server.Core
 
-namespace wmc2mb
+namespace Jellyfin.Plugin.ServerWMC
 {
     public class WMCService : ILiveTvService, IDisposable
     {
@@ -54,7 +54,7 @@ namespace wmc2mb
         public static WMCService Instance { get; private set; }
 
         public bool _serverWMCisDown = false;       // keep track of whether serverwmc was up last time we checked (see timer)
-        public string _recTVPath = null;            // store the path to the rec TV folder received from swmc
+        public string _recTVPath = null;            // store the path to the rec TV folder received from serverwmc
 
         private string _linuxPath;
         public DateTimeOffset LastRecordingChange = DateTimeOffset.MinValue;
@@ -78,26 +78,6 @@ namespace wmc2mb
 
             _linuxPath = null;  // linux path obsoleted in .net core 
 
-            //if (Environment.OSVersion.Platform == PlatformID.Unix)
-            //{
-            //    if (string.IsNullOrEmpty(_linuxPath))
-            //        _logger.Error("Running in Linux, but linux path to RecTV directory is not set in plugin configuration page");
-            //    else
-            //        _logger.Info("Running in Linux, Linux path to mounted RecTV directory: {0}", _linuxPath);
-            //}
-
-            // see if a force transcode profile was set by sneaking it into the Linux path field
-            //if (_linuxPath != null && _linuxPath.Contains('|'))
-            //{
-            //    if (_linuxPath.Split('|').Length > 1)
-            //    {
-            //        string forceProfile = _linuxPath.Split('|')[1];
-            //        _linuxPath = _linuxPath.Split('|')[0];
-            //        _logger.Debug("Forcing transcode profile: " + forceProfile);
-            //        _logger.Debug("Recovered Linux path: " + _linuxPath);
-            //    }
-            //}
-
             // read newest serverwmc build from autoupdate site
             var newBuild = GetNewestSWMCBuild();
             if (newBuild == 0)
@@ -108,9 +88,9 @@ namespace wmc2mb
                 _logger.Info("Newest ServerWMC build value found: " + _newestBuild);
             }
 
-            _fileSystem = fileSystem;                       // for file access, not used currently
+            _fileSystem = fileSystem;   // for file access, not used currently
 
-            // timer to signal server that mbs is alive, this is needed because serverwmc needs to get be polled by the client
+            // timer to signal server that jellyfin server is alive, this is needed because serverwmc needs to get be polled by the client
             // occasionally to know that its still alive
             _recTimer = new Timer(state =>
                     {
@@ -274,7 +254,7 @@ namespace wmc2mb
         }
 
         /// <summary>
-        /// should get called when plugin is disposed of by MBS
+        /// should get called when plugin is disposed of by jellyfin server
         /// </summary>
         public void Dispose()
         {
@@ -306,7 +286,7 @@ namespace wmc2mb
         }
 
         /// <summary>
-        /// convert server padding string val (minutes) to mbs int seconds
+        /// convert server padding string val (minutes) to jellyfin server int seconds
         /// </summary>
         private int GetPaddingSeconds(string inPad)
         {
@@ -314,7 +294,7 @@ namespace wmc2mb
         }
 
         /// <summary>
-        /// convert mbs seconds padding to server string val in minutes
+        /// convert jellyfin server seconds padding to server string val in minutes
         /// </summary>
         private string XferPadding(int inPadSeconds)
         {
@@ -322,7 +302,7 @@ namespace wmc2mb
         }
 
         /// <summary>
-        /// return true if MBS is running in Linux AND if user has set the linux path to recTV on configuration
+        /// return true if jellyfin server is running in Linux AND if user has set the linux path to recTV on configuration
         /// </summary>
         bool useLinuxPath
         {
@@ -594,10 +574,10 @@ namespace wmc2mb
                         await SocketClientAsync.GetVectorAsync(XferString("StreamFileSize", 1d), cancellationToken, streamId);
                     }
                 }
-                else if (_fileSystem.FileExists(strm)) // if the path is a file path
+                else if (File.Exists(strm)) // if the path is a file path
                 {
                     // give serverWMC and response so that it knows the stream  was found
-                    // if there is a problem accessing it, the mbs core will take care of it
+                    // if there is a problem accessing it, the jellyfin server core will take care of it
                     await SocketClientAsync.GetVectorAsync(XferString("StreamFileSize", 1d), cancellationToken, streamId);
                 }
                 else    // tell server file was not accesible and throw an error
@@ -1021,7 +1001,7 @@ namespace wmc2mb
 
                     int idays = int.Parse(v[15]);
 
-                    // convert from wmc DaysOfWeek to mb3 Days list
+                    // convert from wmc DaysOfWeek to jellyfin server Days list
                     sTmr.Days = new List<DayOfWeek>();
                     for (int i = 0; i < 8; i++)
                     {
@@ -1140,10 +1120,6 @@ namespace wmc2mb
             string[] responses = await SocketClientAsync.GetVectorAsync(    XferString("OpenRecordingStream", recordingId, transcodeProfileId),
                                                                             cancellationToken, streamId);
 
-            // old version where we requested streamINFO, the new version of emby get the stream info itself
-            //string[] responses = await SocketClientAsync.GetVectorAsync(XferString("OpenRecordingStream", recordingId, getStreamINFO, transcodeProfileId),
-            //                                                                cancellationToken, streamId);
-
             //System.Threading.Thread.Sleep(15000);         // wait to build up some data, since growing file is not detected
 
             if (!IsServerError(responses) && responses[0] != String.Empty)
@@ -1160,10 +1136,10 @@ namespace wmc2mb
                 if (!isUrl)
                     strmFile = TVPath(strmFile);                // correct for possible unix mount paths
 
-                if (isUrl || _fileSystem.FileExists(strmFile)) 
+                if (isUrl || File.Exists(strmFile)) 
                 {
                     // give serverWMC and response so that it knows the stream  was found
-                    // if there is a problem accessing it, the mbs core will take care of it
+                    // if there is a problem accessing it, the jellyfin server core will take care of it
                     await SocketClientAsync.GetVectorAsync(XferString("StreamFileSize", 1d), cancellationToken, streamId);
                 }
                 else    // tell server file was not accesible and throw an error
@@ -1560,7 +1536,7 @@ namespace wmc2mb
 
             return new LiveTvServiceStatusInfo
             {
-                StatusMessage = status,                     // status error is only shown in mbs if 'Unavailable' is set below
+                StatusMessage = status,                     // status error is only shown in jellyfin server if 'Unavailable' is set below
                 Version = _serverWMC_version,   
                 HasUpdateAvailable = !IsServerUpTodate,     // true if an update is available
                 Status = (serverDown || !IsServerVersionOK || !isRecFolderFound) ? LiveTvServiceStatus.Unavailable : LiveTvServiceStatus.Ok,

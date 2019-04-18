@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace wmc2mb
+namespace Jellyfin.Plugin.ServerWMC
 {
     public class SocketClientAsync
     {
