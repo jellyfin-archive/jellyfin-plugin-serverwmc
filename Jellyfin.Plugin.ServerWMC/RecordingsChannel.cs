@@ -469,7 +469,7 @@ namespace Jellyfin.Plugin.ServerWMC
         /// Gets or sets the original air date.
         /// </summary>
         /// <value>The original air date.</value>
-        public DateTimeOffset? OriginalAirDate { get; set; }
+        public DateTime? OriginalAirDate { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance is movie.
@@ -552,7 +552,7 @@ namespace Jellyfin.Plugin.ServerWMC
         /// Gets or sets the date last updated.
         /// </summary>
         /// <value>The date last updated.</value>
-        public DateTimeOffset DateLastUpdated { get; set; }
+        public DateTime DateLastUpdated { get; set; }
 
         public MyRecordingInfo()
         {

@@ -108,7 +108,7 @@ namespace Jellyfin.Plugin.ServerWMC
                         if (responses != null)  // response != null when server is up
                         {
                             // if server was down last time we checked but now it is up, trigger a data source change -  removed triggered epg data refresh too often
-                            // this should handle the case where MBS starts up BEFORE ServerWMC
+                            // this should handle the case where jellyfin server starts up BEFORE ServerWMC
                             //if (_serverWMCisDown)
                             //{
                             //    DataSourceChange();
@@ -902,8 +902,8 @@ namespace Jellyfin.Plugin.ServerWMC
 
                     mTmr.Id = v[0];
                     mTmr.ChannelId = v[1];
-                    mTmr.StartDate = Utilities.ToDateTime(v[2]);
-                    mTmr.EndDate = Utilities.ToDateTime(v[3]);
+                    mTmr.StartDate = Utilities.ToDateTime(v[2]).UtcDateTime;
+                    mTmr.EndDate = Utilities.ToDateTime(v[3]).UtcDateTime;
                     PVR_TIMER_STATE pState = (PVR_TIMER_STATE)Enum.Parse(typeof(PVR_TIMER_STATE), v[4]);    // get xbmc style recording state
 
                     mTmr.Name = v[5];
@@ -987,8 +987,8 @@ namespace Jellyfin.Plugin.ServerWMC
                         ChannelId = v[2],
                         ProgramId = ProgramId(v[3], v[2]),
                         Overview = v[4],
-                        StartDate = Utilities.ToDateTime(v[5]),
-                        EndDate = Utilities.ToDateTime(v[6]),
+                        StartDate = Utilities.ToDateTime(v[5]).UtcDateTime,
+                        EndDate = Utilities.ToDateTime(v[6]).UtcDateTime,
                         PrePaddingSeconds = GetPaddingSeconds(v[7]),
                         PostPaddingSeconds = GetPaddingSeconds(v[8]),
                         IsPrePaddingRequired = bool.Parse(v[9]),
@@ -1259,7 +1259,7 @@ namespace Jellyfin.Plugin.ServerWMC
                     }
                     mRec.HasImage = false;// v[7] != string.Empty;
                     //STRCPY(xRec.strThumbnailPath, v[8].c_str());
-                    mRec.StartDate = Utilities.ToDateTime(v[9]);
+                    mRec.StartDate = Utilities.ToDateTime(v[9]).UtcDateTime;
                     mRec.EndDate = mRec.StartDate.AddSeconds(int.Parse(v[10]));
                     //xRec.iPriority = atoi(v[11].c_str());
                     //xRec.iLifetime = atoi(v[12].c_str());
@@ -1271,7 +1271,7 @@ namespace Jellyfin.Plugin.ServerWMC
                     mRec.ProgramId = ProgramId(v[18], mRec.ChannelId);
                     mRec.SeriesTimerId = v[19];
                     mRec.Audio = (ProgramAudio)Enum.Parse(typeof(ProgramAudio), v[20]);
-                    mRec.OriginalAirDate = Utilities.ToDateTime(v[21]);
+                    mRec.OriginalAirDate = Utilities.ToDateTime(v[21]).UtcDateTime;
                     mRec.Genres = v[22].Split(dlim, StringSplitOptions.RemoveEmptyEntries).ToList();
 
                     // set episode flags from ProgramType
@@ -1332,7 +1332,7 @@ namespace Jellyfin.Plugin.ServerWMC
         #region epg
 
 
-        public async Task<IEnumerable<ProgramInfo>> GetProgramsAsync(string channelId, DateTimeOffset startDateUtc, DateTimeOffset endDateUtc, CancellationToken cancellationToken)
+        public async Task<IEnumerable<ProgramInfo>> GetProgramsAsync(string channelId, DateTime startDateUtc, DateTime endDateUtc, CancellationToken cancellationToken)
         {
             var programs = new List<ProgramInfo>();
 
@@ -1359,15 +1359,13 @@ namespace Jellyfin.Plugin.ServerWMC
                     mProg.Id = ProgramId(v[0], v[16]); 
                     mProg.Name = v[1];
                     //mProg.ChannelName = v[2];
-                    mProg.StartDate = Utilities.ToDateTime(v[3]);
-                    mProg.EndDate = Utilities.ToDateTime(v[4]);
-                    var tStart = mProg.StartDate.ToLocalTime();
-                    var tEnd = mProg.EndDate.ToLocalTime();
+                    mProg.StartDate = Utilities.ToDateTime(v[3]).UtcDateTime;
+                    mProg.EndDate = Utilities.ToDateTime(v[4]).UtcDateTime;
 
                     mProg.ShortOverview = v[5];
                     mProg.Overview = v[6];
                     //mProg.Plot = Utilities.ToDateTime(v[6]);
-                    mProg.OriginalAirDate = Utilities.ToDateTime(v[7]);
+                    mProg.OriginalAirDate = Utilities.ToDateTime(v[7]).UtcDateTime;
                     mProg.OfficialRating = GetRating((TVRatingWMC)Enum.Parse(typeof(TVRatingWMC), v[8]));   // tv rating
                     mProg.CommunityRating = 1;// float.Parse(v[9]);      // setting equal to star rating not working
                     mProg.SeasonNumber = Utilities.ToInt(v[10], true);   //10  epg123 returns this field as nonZero
