@@ -1,8 +1,9 @@
 ---
 name: "jellyfin-plugin-serverwmc"
 guid: "1fc322a1-af2e-49a5-b2eb-a89b4240f700"
-version: "1.0.0"
-nicename: "Template"
+version: "1" # Please increment with each pull request
+jellyfin_version: "10.3.0" # The earliest binary-compatible version
+nicename: "ServerWMC"
 description: "Jellyfin LiveTV plugin for Windows MediaCenter with ServerWMC"
 overview: >
   Provides access to LiveTV, Program Guide and Recordings from your Windows MediaCenter Server running ServerWMC.
