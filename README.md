@@ -1,4 +1,7 @@
 # Jellyfin plugin for Windows MediaCenter with ServerWMC
+[![](https://img.shields.io/github/languages/top/prplhaz4/jellyfin-plugin-serverwmc.svg)](https://github.com/prplhaz4/jellyfin-plugin-serverwmc)
+[![](https://img.shields.io/github/contributors/prplhaz4/jellyfin-plugin-serverwmc.svg)](https://github.com/prplhaz4/jellyfin-plugin-serverwmc)
+[![](https://img.shields.io/github/license/prplhaz4/jellyfin-plugin-serverwmc.svg)](https://github.com/prplhaz4/jellyfin-plugin-serverwmc)
 
 ## Features
 - Stream LiveTV
