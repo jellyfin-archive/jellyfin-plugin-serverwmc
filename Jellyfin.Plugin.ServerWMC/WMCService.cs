@@ -76,7 +76,7 @@ namespace Jellyfin.Plugin.ServerWMC
 
             //Thread.Sleep(20000);
 
-            _linuxPath = null;  // linux path obsoleted in .net core
+            _linuxPath = Plugin.Instance.Configuration.LinuxPath;
 
             // read newest serverwmc build from autoupdate site
             var newBuild = GetNewestSWMCBuild();
