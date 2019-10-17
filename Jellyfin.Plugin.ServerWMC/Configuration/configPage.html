@@ -62,7 +62,7 @@
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     },
                     function (result) {
-                        Dashboard.alert("Saving configuration failed.");
+                        Dashboard.alert("Saving configuration failed.  Make sure ServerWMC is running, and Jellyfin can access the target IP and Port.");
                     });
                 });
                 return false;
