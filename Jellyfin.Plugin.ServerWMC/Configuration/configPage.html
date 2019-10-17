@@ -1,111 +1,70 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
+    <meta charset="utf-8" />
     <title>ServerWMC</title>
 </head>
 <body>
-    <div data-role="page" class="page type-interior pluginConfigurationPage serverwmcConfigurationPage">
-
+    <div id="ServerWMCConfigurationPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button">
         <div data-role="content">
             <div class="content-primary">
-                <form class="serverwmcConfigurationForm">
-
-                    <ul class="ulForm" data-role="listview">
-                        <li>
-                            <a href="http://bit.ly/serverwmc" target="_blank">
-                                ServerWMC app is required for this plugin, download installer here
-                            </a>
-                            <p class="fieldDescription">
-                                The ServerWMC app needs to be running on the machine that has WMC installed and configured, but the WMC app does not need to be running to use the program.
-                            </p>
-                            <p class="fieldDescription">
-                                If Jellyfin Server is running on a different machine than ServerWMC, make sure that the 'Recorded TV' folder that is used for new recordings is shared on the network (see 'Folders' tab in ServerWMC), and make sure the Jellyfin Server can access this folder.
-                            </p>
-                        </li>
-                        <li>
-                            <label for="txtServerWMCIP">
-                                ServerWMC IP/Name:
-                            </label>
-                            <input type="text" id="txtServerWMCIP" name="txtServerWMCIP" />
-                            <div class="fieldDescription">
-                                The ip address or name of your ServerWMC machine
-                            </div>
-                        </li>
-                        <li>
-                            <label for="txtServerWMCPort">
-                                ServerWMC Port:
-                            </label>
-                            <input id="txtServerWMCPort" name="txtServerWMCPort" type="number" pattern="[0-9]*" min="1" />
-                            <div class="fieldDescription">
-                                The Port of your ServerWMC machine
-                            </div>
-                        </li>
-                        <li>
-                            <label for="txtLinux">
-                                Linux 'Recorded TV' path:
-                            </label>
-                            <input type="text" id="txtLinuxPath" name="txtLinuxPath" />
-                            <div class="fieldDescription">
-                                For Emby running on Linux, WMC's 'recorded tv' share needs to be mounted and the linux path to this directory needs to be entered here.
-                            </div>
-                        </li>
-                        <li>
-                            <button type="submit" data-theme="b">Save</button>
-                            <button type="button" onclick="history.back();">Cancel</button>
-                        </li>
-                    </ul>
-
+                <h1>ServerWMC</h1>
+                <p>ServerWMC app is required for this plugin, download installer here (<a href="https://serverwmc.github.io/" target="_blank">https://serverwmc.github.io/</a>)</p>
+                <p>The ServerWMC app needs to be running on the machine that has WMC installed and configured, but the WMC app does not need to be running to use the program.</p>
+                <p>If Jellyfin Server is running on a different machine than ServerWMC, make sure that the 'Recorded TV' folder that is used for new recordings is shared on the network (see 'Folders' tab in ServerWMC), and that the Jellyfin Server can access this folder.</p>
+                
+                <h2>Configuration</h2>
+                <form id="ServerWMCConfigurationForm">
+                    <div class="inputContainer">
+                        <label class="inputeLabel inputLabelUnfocused" for="txtServerWMCIP">ServerWMC IP/Name</label>
+                        <input id="txtServerWMCIP" name="txtServerWMCIP" type="text" is="emby-input" />
+                        <div class="fieldDescription">The ip address or name of your ServerWMC machine</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputeLabel inputLabelUnfocused" for="txtServerWMCPort">ServerWMC Port</label>
+                        <input id="txtServerWMCPort" name="txtServerWMCPort" type="number" pattern="[0-9]*" min="1" is="emby-input" />
+                        <div class="fieldDescription">The port used to access ServerWMC (default is 9080)</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputeLabel inputLabelUnfocused" for="txtLinuxPath">Linux 'Recorded TV' path</label>
+                        <input id="txtLinuxPath" name="txtLinuxPath" type="text" is="emby-input" />
+                        <div class="fieldDescription">For Jellyfin running on Linux, WMC's 'recorded tv' share needs to be mounted and the Linux path to this directory needs to be entered here.</div>
+                    </div>
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
 
         <script type="text/javascript">
-
-            var ServerWMCConfigurationPage = {
-                pluginUniqueId: "1fc322a1-af2e-49a5-b2eb-a89b4240f700"
+            var ServerWMCConfig = {
+                pluginUniqueId: '1fc322a1-af2e-49a5-b2eb-a89b4240f700'
             };
-
-            $('.serverwmcConfigurationPage').on('pageshow', function (event) {
-
-                Dashboard.showLoadingMsg();
-
-                var page = this;
-
-                ApiClient.getPluginConfiguration(ServerWMCConfigurationPage.pluginUniqueId).then(function (config) {
-
-                    $('#txtServerWMCIP', page).val(config.ServerIP || "");
-                    $('#txtServerWMCPort', page).val(config.ServerPort || "");
-                    $('#txtLinuxPath', page).val(config.LinuxPath || "");
-                    $('#txtMaxEpgDownload', page).val(config.EpgMaxDownload || "");
-
-                    Dashboard.hideLoadingMsg();
+            $('#ServerWMCConfigurationPage').on('pageshow', function () {
+                ApiClient.getPluginConfiguration(ServerWMCConfig.pluginUniqueId).then(function (config) {
+                    var page = $.mobile.activePage;
+                    $('#txtServerWMCIP', page).val(config.ServerIP).change();
+                    $('#txtServerWMCPort', page).val(config.ServerPort).change();
+                    $('#txtLinuxPath', page).val(config.LinuxPath).change();
                 });
             });
-
-            $('.serverwmcConfigurationPage').on('submit', function (e) {
-
-                Dashboard.showLoadingMsg();
-
-                var form = this;
-
-                ApiClient.getPluginConfiguration(ServerWMCConfigurationPage.pluginUniqueId).then(function (config) {
-
-                    var serverIP = $('#txtServerWMCIP', form).val();
-                    var serverPort = $('#txtServerWMCPort', form).val();
-                    var linuxPath = $('#txtLinuxPath', form).val();
-                    var maxEpgDownload = $('#txtMaxEpgDownload', form).val();
-
-                    config.ServerIP = serverIP ? serverIP : null;
-                    config.ServerPort = serverPort ? serverPort : null;
-                    config.LinuxPath = linuxPath ? linuxPath : null;
-                    config.EpgMaxDownload = maxEpgDownload ? maxEpgDownload : null;
-
-                    ApiClient.updatePluginConfiguration(ServerWMCConfigurationPage.pluginUniqueId, config).then(Dashboard.processPluginConfigurationUpdateResult,
-                        function () {
-                            alert('There was an error communicating with ServerWmc. Please make sure the ServerWmc application is installed and running, and reachable from the above configured address.');
-                        });
+            $('#ServerWMCConfigurationForm').on('submit', function () {
+                ApiClient.getPluginConfiguration(ServerWMCConfig.pluginUniqueId).then(function (config) {
+                    var page = $.mobile.activePage;
+                    config.ServerIP = $('#txtServerWMCIP', page).val();
+                    config.ServerPort = $('#txtServerWMCPort', page).val();
+                    config.LinuxPath = $('#txtLinuxPath', page).val();
+                    ApiClient.updatePluginConfiguration(ServerWMCConfig.pluginUniqueId, config).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    },
+                    function (result) {
+                        Dashboard.alert("Saving configuration failed.");
+                    });
                 });
-
                 return false;
             });
         </script>

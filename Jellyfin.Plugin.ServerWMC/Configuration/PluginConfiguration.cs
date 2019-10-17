@@ -26,7 +26,7 @@ namespace Jellyfin.Plugin.ServerWMC.Configuration
         /// <summary>
         /// Initializes a new instance of the <see cref="PluginConfiguration" /> class.
         /// </summary>
-        public PluginConfiguration() : base()
+        public PluginConfiguration()
         {
             ServerIP = "localhost";
             ServerPort = 9080;

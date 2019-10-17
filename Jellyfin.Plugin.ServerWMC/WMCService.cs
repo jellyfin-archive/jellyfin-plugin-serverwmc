@@ -69,23 +69,23 @@ namespace Jellyfin.Plugin.ServerWMC
             _clientVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
             SocketClientAsync.InitAddress(Plugin.Instance.Configuration.ServerIP, Plugin.Instance.Configuration.ServerPort);    // set ip and port
-            _logger.LogInformation("Config IP: {0} ({1}), Config Port: {2}",
+            _logger.LogInformation("[ServerWMC] Config IP: {0} ({1}), Config Port: {2}",
                                             Plugin.Instance.Configuration.ServerIP,
                                             SocketClientAsync.IpAddr,
                                             Plugin.Instance.Configuration.ServerPort);
 
             //Thread.Sleep(20000);
 
-            _linuxPath = null;  // linux path obsoleted in .net core
+            _linuxPath = Plugin.Instance.Configuration.LinuxPath;
 
             // read newest serverwmc build from autoupdate site
             var newBuild = GetNewestSWMCBuild();
             if (newBuild == 0)
-                _logger.LogInformation("Using last hardcoded build value: " + _newestBuild);
+                _logger.LogInformation("[ServerWMC] Using last hardcoded build value: " + _newestBuild);
             else
             {
                 _newestBuild = newBuild;
-                _logger.LogInformation("Newest ServerWMC build value found: " + _newestBuild);
+                _logger.LogInformation("[ServerWMC] Newest ServerWMC build value found: " + _newestBuild);
             }
 
             _fileSystem = fileSystem;   // for file access, not used currently
@@ -205,7 +205,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed check for checking for newest ServerWMC version number: " + ex);
+                _logger.LogError("[ServerWMC] Failed check for checking for newest ServerWMC version number: " + ex);
                 return 0;
             }
         }
@@ -517,12 +517,12 @@ namespace Jellyfin.Plugin.ServerWMC
                             }
                         }
                         else
-                            _logger.LogError("GetMediaStream> Prop name: " + propName + " not found");
+                            _logger.LogError("[ServerWMC] GetMediaStream> Prop name: " + propName + " not found");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("GetMediaStream> Media stream parse error: {0}", ex);
+                    _logger.LogError("[ServerWMC] GetMediaStream> Media stream parse error: {0}", ex);
                 }
             }
             return ms;
@@ -582,7 +582,7 @@ namespace Jellyfin.Plugin.ServerWMC
                 }
                 else    // tell server file was not accesible and throw an error
                 {
-                    _logger.LogError("GetChannelStream> stream file not found: {0}", strm);
+                    _logger.LogError("[ServerWMC] GetChannelStream> stream file not found: {0}", strm);
                     // tell server stream did not start
                     await SocketClientAsync.GetVectorAsync(XferString("StreamStartError", strm), cancellationToken, streamId);
                     throw new Exception("ServerWMC: Stream file not not found: " + strm);
@@ -724,7 +724,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.LogError("GetChannelsAsync> " + ex);
+                _logger.LogError("[ServerWMC] GetChannelsAsync> " + ex);
                 throw ex;
             }
 
@@ -797,7 +797,7 @@ namespace Jellyfin.Plugin.ServerWMC
 
             if (DateTimeOffset.UtcNow >= info.EndDate)
             {
-                _logger.LogError("CreateTimerAsync> requested program '{0}' has already aired;  EndTime(UTC): {1},  CurrentTime(UTC): {2}", info.Name, info.EndDate, DateTimeOffset.UtcNow);
+                _logger.LogError("[ServerWMC] CreateTimerAsync> requested program '{0}' has already aired;  EndTime(UTC): {1},  CurrentTime(UTC): {2}", info.Name, info.EndDate, DateTimeOffset.UtcNow);
                 throw new Exception("ServerWMC: Can't record: program occurs in the past");
             }
 
@@ -822,7 +822,7 @@ namespace Jellyfin.Plugin.ServerWMC
             {
                 LastRecordingChange = DateTimeOffset.UtcNow;
 
-                _logger.LogInformation("CreateTimerAsync> recording added for timer '{0}', status {1}", info.Name, info.Status);
+                _logger.LogInformation("[ServerWMC] CreateTimerAsync> recording added for timer '{0}', status {1}", info.Name, info.Status);
 
 		        if (responses.Length > 1)								        // if there is extra results sent from server...
 		        {
@@ -836,15 +836,15 @@ namespace Jellyfin.Plugin.ServerWMC
 				        }
 				        else if (splitResult[0] == "recordingChannel")			// service picked a different channel for timer
 				        {
-                            _logger.LogInformation("CreateTimerAsync> timer channel changed by wmc to '{0}'", splitResult[1]);
+                            _logger.LogInformation("[ServerWMC] CreateTimerAsync> timer channel changed by wmc to '{0}'", splitResult[1]);
 				        }
 				        else if (splitResult[0] == "recordingTime")				// service picked a different start time for timer
 				        {
-                            _logger.LogInformation("CreateTimerAsync> timer start time changed by wmc to '{0}'", splitResult[1]);
+                            _logger.LogInformation("[ServerWMC] CreateTimerAsync> timer start time changed by wmc to '{0}'", splitResult[1]);
 				        }
 				        else if (splitResult[0] == "increasedEndTime")			// end time has been increased on an instant record
                         {
-                            _logger.LogInformation("CreateTimerAsync> instant record end time increased by '{0}' minutes", splitResult[1]);
+                            _logger.LogInformation("[ServerWMC] CreateTimerAsync> instant record end time increased by '{0}' minutes", splitResult[1]);
 				        }
 			        }
 		        }
@@ -961,7 +961,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.LogError("GetTimersAsync> " + ex);
+                _logger.LogError("[ServerWMC] GetTimersAsync> " + ex);
                 throw ex;
             }
 
@@ -1015,7 +1015,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.LogError("GetSeriesTimersAsync> " + ex);
+                _logger.LogError("[ServerWMC] GetSeriesTimersAsync> " + ex);
                 throw ex;
             }
 
@@ -1144,7 +1144,7 @@ namespace Jellyfin.Plugin.ServerWMC
                 }
                 else    // tell server file was not accesible and throw an error
                 {
-                    _logger.LogError("GetRecordingStream> stream file not found: {0}", strmFile);
+                    _logger.LogError("[ServerWMC] GetRecordingStream> stream file not found: {0}", strmFile);
                     // tell server stream did not start
                     await SocketClientAsync.GetVectorAsync(XferString("StreamStartError", strmFile), cancellationToken, streamId);
                     throw new Exception("ServerWMC: Stream file not not found: " + strmFile);
@@ -1315,7 +1315,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.LogError("GetRecordingsAsync> " + ex.Message);
+                _logger.LogError("[ServerWMC] GetRecordingsAsync> " + ex.Message);
                 throw ex;
             }
 
@@ -1410,7 +1410,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.LogError("GetProgramsAsync> " + ex.Message);
+                _logger.LogError("[ServerWMC] GetProgramsAsync> " + ex.Message);
                 throw ex;
             }
 
@@ -1503,7 +1503,7 @@ namespace Jellyfin.Plugin.ServerWMC
             }
             catch (Exception ex)
             {
-                _logger.LogError("GetStatusInfoAsync::TunerStatus> " + ex.Message);
+                _logger.LogError("[ServerWMC] GetStatusInfoAsync::TunerStatus> " + ex.Message);
                 throw ex;
             }
             #endregion
