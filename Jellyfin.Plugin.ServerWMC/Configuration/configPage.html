@@ -1,41 +1,41 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
+    <meta charset="utf-8" />
     <title>ServerWMC</title>
 </head>
 <body>
     <div id="ServerWMCConfigurationPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button">
         <div data-role="content">
             <div class="content-primary">
-                <form class="serverwmcConfigurationForm">
-
+                <h1>ServerWMC</h1>
+                <p>ServerWMC app is required for this plugin, download installer here (<a href="https://serverwmc.github.io/" target="_blank">https://serverwmc.github.io/</a>)</p>
+                <p>The ServerWMC app needs to be running on the machine that has WMC installed and configured, but the WMC app does not need to be running to use the program.</p>
+                <p>If Jellyfin Server is running on a different machine than ServerWMC, make sure that the 'Recorded TV' folder that is used for new recordings is shared on the network (see 'Folders' tab in ServerWMC), and that the Jellyfin Server can access this folder.</p>
+                
+                <h2>Configuration</h2>
                 <form id="ServerWMCConfigurationForm">
-                            </div>
-                        </li>
-                        <li>
-                            <label for="txtServerWMCPort">
-                                ServerWMC Port:
-                            </label>
-                            <input id="txtServerWMCPort" name="txtServerWMCPort" type="number" pattern="[0-9]*" min="1" />
-                            <div class="fieldDescription">
-                                The Port of your ServerWMC machine
-                            </div>
-                        </li>
-                        <li>
-                            <label for="txtLinux">
-                                Linux 'Recorded TV' path:
-                            </label>
-                            <input type="text" id="txtLinuxPath" name="txtLinuxPath" />
-                            <div class="fieldDescription">
-                                For Emby running on Linux, WMC's 'recorded tv' share needs to be mounted and the linux path to this directory needs to be entered here.
-                            </div>
-                        </li>
-                        <li>
-                            <button type="submit" data-theme="b">Save</button>
-                            <button type="button" onclick="history.back();">Cancel</button>
-                        </li>
-                    </ul>
-
+                    <div class="inputContainer">
+                        <label class="inputeLabel inputLabelUnfocused" for="txtServerWMCIP">ServerWMC IP/Name</label>
+                        <input id="txtServerWMCIP" name="txtServerWMCIP" type="text" is="emby-input" />
+                        <div class="fieldDescription">The ip address or name of your ServerWMC machine</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputeLabel inputLabelUnfocused" for="txtServerWMCPort">ServerWMC Port</label>
+                        <input id="txtServerWMCPort" name="txtServerWMCPort" type="number" pattern="[0-9]*" min="1" is="emby-input" />
+                        <div class="fieldDescription">The port used to access ServerWMC (default is 9080)</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputeLabel inputLabelUnfocused" for="txtLinuxPath">Linux 'Recorded TV' path</label>
+                        <input id="txtLinuxPath" name="txtLinuxPath" type="text" is="emby-input" />
+                        <div class="fieldDescription">For Jellyfin running on Linux, WMC's 'recorded tv' share needs to be mounted and the Linux path to this directory needs to be entered here.</div>
+                    </div>
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -63,9 +63,8 @@
                     },
                     function (result) {
                         Dashboard.alert("Saving configuration failed.");
-                        });
+                    });
                 });
-
                 return false;
             });
         </script>
