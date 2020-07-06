@@ -40,7 +40,7 @@ namespace Jellyfin.Plugin.ServerWMC
         int _idStreamInt = 0;               // use to generate stream Id
         string _serverWMC_version = "unknown";
         private int _serverWMC_build = 0;
-        private readonly ILogger _logger;
+        private readonly ILogger<WMCService> _logger;
 
         private readonly string HTTP = @"http://";
 
@@ -65,7 +65,7 @@ namespace Jellyfin.Plugin.ServerWMC
         public WMCService(IHttpClient httpClient, IFileSystem fileSystem, ILoggerFactory loggerFactory)
         {
             Instance = this;
-            _logger = loggerFactory.CreateLogger(GetType().Name);    // start logger
+            _logger = loggerFactory.CreateLogger<WMCService>();    // start logger
             _clientVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
             SocketClientAsync.InitAddress(Plugin.Instance.Configuration.ServerIP, Plugin.Instance.Configuration.ServerPort);    // set ip and port
