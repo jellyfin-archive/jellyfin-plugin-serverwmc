@@ -1,8 +1,8 @@
 ---
 name: "ServerWMC"
 guid: "1fc322a1-af2e-49a5-b2eb-a89b4240f700"
-version: "4.0.0.0"
-targetAbi: "10.5.0.0"
+version: "5.0.0.0"
+targetAbi: "10.6.0.0"
 overview: "Jellyfin Live TV plugin for Windows MediaCenter with ServerWMC"
 description: >
   Provides access to Live TV, Program Guide and Recordings from your Windows MediaCenter Server running ServerWMC.
