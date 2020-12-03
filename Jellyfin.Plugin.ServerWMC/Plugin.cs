@@ -5,9 +5,6 @@ using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
-using Microsoft.Extensions.Logging;
-using System.IO;
-using MediaBrowser.Model.Drawing;
 
 namespace Jellyfin.Plugin.ServerWMC
 {

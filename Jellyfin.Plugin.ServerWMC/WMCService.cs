@@ -4,18 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.LiveTv;
 using System.Threading;
 using System.Reflection;
-using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using MediaBrowser.Model.Entities;
-using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Model.Dto;
-using System.Net;
 using System.Xml.Linq;
 using MediaBrowser.Model.MediaInfo;
 using MediaBrowser.Model.IO;
@@ -62,7 +58,7 @@ namespace Jellyfin.Plugin.ServerWMC
         /// <summary>
         /// constructor
         /// </summary>
-        public WMCService(IHttpClient httpClient, IFileSystem fileSystem, ILoggerFactory loggerFactory)
+        public WMCService(IFileSystem fileSystem, ILoggerFactory loggerFactory)
         {
             Instance = this;
             _logger = loggerFactory.CreateLogger<WMCService>();    // start logger
