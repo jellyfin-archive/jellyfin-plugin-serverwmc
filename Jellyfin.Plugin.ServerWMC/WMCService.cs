@@ -16,6 +16,7 @@ using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Model.Dto;
 using System.Net;
+using System.Net.Http;
 using System.Xml.Linq;
 using MediaBrowser.Model.MediaInfo;
 using MediaBrowser.Model.IO;
@@ -62,7 +63,7 @@ namespace Jellyfin.Plugin.ServerWMC
         /// <summary>
         /// constructor
         /// </summary>
-        public WMCService(IHttpClient httpClient, IFileSystem fileSystem, ILoggerFactory loggerFactory)
+        public WMCService(IFileSystem fileSystem, ILoggerFactory loggerFactory)
         {
             Instance = this;
             _logger = loggerFactory.CreateLogger<WMCService>();    // start logger
